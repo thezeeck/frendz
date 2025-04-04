@@ -1,12 +1,8 @@
 import connectionPool from "@/app/lib/db";
-import { juanpeFrendz } from "./profile-placeholder";
 import { UserFrendz } from "@/app/types/types";
 
-const frendzListPlaceholder = {
-    juanpe: juanpeFrendz,
-}
 
-export const getFrendz = async (id: keyof typeof frendzListPlaceholder) => {
+export const getFrendz = async (id: string) => {
     let frendzList: UserFrendz[] = [];
 
     try {
@@ -23,7 +19,6 @@ export const getFrendz = async (id: keyof typeof frendzListPlaceholder) => {
 
         frendzList = result.rows;
     } catch (error) {
-        frendzList = frendzListPlaceholder[id]; // Fallback to placeholder data
         console.error("Error fetching data from database:", error);
         throw error;
     }
