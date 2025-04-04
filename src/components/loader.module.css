@@ -1,0 +1,35 @@
+.loading {
+    position: relative;
+    margin: 0 auto;
+    width: 12.5rem;
+    height: 12.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3rem;
+    background-color: var(--secondary-background);
+    overflow: hidden;
+}
+
+.loading_blur {
+    transform: skew(30deg, 0deg);
+    position: absolute;
+    width: 75%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    filter: blur(8px);
+    left: -9rem;
+    animation: blur 4s infinite linear;
+    background-color: rgba(8, 150, 176, 0.1);
+}
+
+@keyframes blur {
+    0% {
+        transform: translate(0px) skew(30deg, 0deg);
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+        transform: translate(25rem) skew(30deg, 0deg);
+    }
+}

@@ -1,0 +1,123 @@
+-- DROP FUNCTION public.get_friend_posts(varchar);
+
+CREATE OR REPLACE FUNCTION public.get_friend_posts(p_username character varying)
+ RETURNS TABLE(post_id uuid, content text, images text[], created_at timestamp with time zone, author_username character varying, author_display_name character varying, author_avatar text)
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.post_id,
+        p.content,
+        p.images,
+        p.created_at,
+        u.username,
+        u.display_name,
+        u.profile_picture_url
+    FROM public.posts p
+    JOIN public.users u ON p.user_id = u.user_id
+    WHERE 
+        p.user_id IN (
+            -- Obtener IDs de amigos
+            SELECT 
+                CASE 
+                    WHEN ur.requester_id = target_user.user_id THEN ur.addressee_id
+                    ELSE ur.requester_id
+                END AS friend_id
+            FROM public.user_relationships ur
+            CROSS JOIN (
+                SELECT user_id 
+                FROM public.users 
+                WHERE username = p_username
+            ) AS target_user
+            WHERE (ur.requester_id = target_user.user_id OR ur.addressee_id = target_user.user_id)
+            AND ur.status = 'accepted'
+        )
+        AND p.privacy_settings IN ('public', 'friends') -- Solo posts visibles
+    ORDER BY p.created_at DESC;
+END;
+$function$
+;
+
+-- 
+
+-- DROP FUNCTION public.get_friends_by_username(varchar);
+
+CREATE OR REPLACE FUNCTION public.get_friends_by_username(p_username character varying)
+ RETURNS SETOF users
+ LANGUAGE plpgsql
+AS $function$ -- <--- Declaración SETOF aquí
+BEGIN
+    RETURN QUERY
+    SELECT u.*
+    FROM public.users u
+    WHERE u.user_id IN (
+        SELECT 
+            CASE
+                WHEN ur.requester_id = target_user.user_id THEN ur.addressee_id
+                ELSE ur.requester_id
+            END AS friend_id
+        FROM public.user_relationships ur
+        CROSS JOIN (
+            SELECT user_id 
+            FROM public.users 
+            WHERE username = p_username
+        ) AS target_user
+        WHERE (ur.requester_id = target_user.user_id OR ur.addressee_id = target_user.user_id)
+        AND ur.status = 'accepted'
+    );
+END;
+$function$
+;
+
+--
+
+-- DROP FUNCTION public.get_posts_with_user_info(varchar);
+
+CREATE OR REPLACE FUNCTION public.get_posts_with_user_info(p_username character varying)
+ RETURNS TABLE(post_id uuid, post_content text, post_images text[], post_created timestamp with time zone, post_privacy character varying, like_count integer, comment_count integer, author_id uuid, author_username character varying, author_display_name character varying, author_profile_picture text, author_bio text, author_website character varying, author_city character varying, author_phone character varying, author_account_status boolean)
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        p.post_id,
+        p.content,
+        p.images,
+        p.created_at,
+        p.privacy_settings,
+        p.like_count,
+        p.comment_count,
+        
+        u.user_id,
+        u.username,
+        u.display_name,
+        u.profile_picture_url,
+        u.bio,
+        u.website_url,
+        u.current_city,
+        u.phone_number,
+        u.account_status
+    FROM public.posts p
+    JOIN public.users u ON p.user_id = u.user_id
+    WHERE 
+        p.user_id IN (
+            SELECT 
+                CASE 
+                    WHEN ur.requester_id = target_user.user_id THEN ur.addressee_id
+                    ELSE ur.requester_id
+                END
+            FROM public.user_relationships ur
+            CROSS JOIN (
+                SELECT user_id 
+                FROM public.users 
+                WHERE username = p_username
+            ) target_user
+            WHERE (ur.requester_id = target_user.user_id OR ur.addressee_id = target_user.user_id)
+            AND ur.status = 'accepted'
+        )
+        AND p.privacy_settings IN ('public', 'friends')
+    ORDER BY p.created_at DESC;
+END;
+$function$
+;

@@ -1,0 +1,10 @@
+.header {
+    padding: 1rem;
+    text-align: center;
+    color: #9B9B99;
+    grid-area: header;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
